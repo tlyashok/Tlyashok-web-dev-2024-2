@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <article class="mt-5">
+            <h1>{{ post.title }}</h1>
+            <p class="text-muted">Автор: {{ post.author }}</p>
+            <p class="text-muted">Дата публикации: {{ post.date.strftime('%d.%m.%Y') }}</p>
+            <div class="flex-shrink-0 d-flex justify-content-center">
+                <img src="{{ url_for('static', filename='images/' + post.image_id) }}" alt="Post Image" class="img-fluid my-3" width="75%">
+            </div>
+            <p>{{ post.text }}</p>
+        </article>
+
+        <hr>
+
+        <form action="{{ url_for('add_comment', post_index=post_index) }}" method="post" class="mt-4">
+            <div class="mb-3">
+                <label for="comment" class="form-label">Оставьте комментарий</label>
+                <div id="comment">
+                    <label for="comment_text" class="form-label">Оставьте комментарий</label>
+                    <textarea class="form-control" id="comment_text" name="comment_text" rows="3" required></textarea>
+                </div>
+                
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+
+        <h2 class="mt-4">Комментарии</h2>
+        <div class="comments">
+            {% for comment in post.comments %}
+                <div class="d-flex border p-3 mb-3">
+                    <div class="flex-shrink-0">
+                        <img src="{{ url_for('static', filename='images/' + comment.avatar_image) }}" class="rounded-circle" alt="Avatar" width="64">
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5>{{ comment.author }}</h5>
+                        <p class="mb-3">{{ comment.text }}</p>
+                        {% if comment.replies %}
+                            {% for reply in comment.replies %}
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0 mx-3">
+                                        <img src="{{ url_for('static', filename='images/' + reply.avatar_image) }}" class="rounded-circle" alt="Avatar" width="64">
+                                    </div>
+                                    <div>
+                                        <h5>{{ comment.author }}</h5>
+                                        <p>{{ reply.text }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
