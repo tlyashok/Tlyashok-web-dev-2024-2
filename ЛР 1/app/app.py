@@ -1,5 +1,4 @@
 import random
-import time
 from flask import Flask, render_template, request, redirect, url_for
 from faker import Faker
 
@@ -64,7 +63,9 @@ def posts():
 @app.route('/posts/<int:index>')
 def post(index):
     p = posts_list[index]
-    return render_template('post.html', title=p['title'], post=p, post_index=index)
+    return render_template(
+        'post.html', title=p['title'], post=p, post_index=index
+        )
 
 
 @app.route('/about')
@@ -75,8 +76,9 @@ def about():
 @app.route('/add_comment/<int:post_index>', methods=['POST'])
 def add_comment(post_index):
     comment_text = request.form.get('comment_text')
+    author_text = request.form.get('author_text')
     posts_list[post_index]['comments'].append({
-        'author': 'Пользователь',
+        'author': author_text,
         'text': comment_text,
         'avatar_image': avatars[random.randint(0, len(avatars)-1)]
     })

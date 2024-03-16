@@ -16,9 +16,12 @@
 
         <form action="{{ url_for('add_comment', post_index=post_index) }}" method="post" class="mt-4">
             <div class="mb-3">
-                <label for="comment" class="form-label">Оставьте комментарий</label>
+                <div id="author">
+                    <label for="author_text" class="form-label">Ваше имя:</label>
+                    <textarea class="form-control" id="author_text" name="author_text" rows="1" required></textarea>
+                </div>
                 <div id="comment">
-                    <label for="comment_text" class="form-label">Оставьте комментарий</label>
+                    <label for="comment" class="form-label">Комментарий:</label>
                     <textarea class="form-control" id="comment_text" name="comment_text" rows="3" required></textarea>
                 </div>
                 
