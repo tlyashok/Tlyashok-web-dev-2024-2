@@ -7,6 +7,8 @@ fake = Faker()
 app = Flask(__name__)
 application = app
 
+POST_LIST_LEN = 5
+
 images_ids = [
     '7d4e9175-95ea-4c5f-8be5-92a6b708bb3c',
     '2d2ab7df-cdbc-48a8-a936-35bba702def5',
@@ -22,32 +24,21 @@ avatars = [
 ]
 
 
-def generate_comments(replies=True):
-    comments = []
-    for i in range(5):
-        comment = {'author': fake.name(),
-                   'text': fake.text(),
-                   'avatar_image': avatars[random.randint(0, len(avatars)-1)]}
-        if replies:
-            comment['replies'] = generate_comments(replies=False)
-        comments.append(comment)
-    return comments
-
-
 def generate_post(i):
     return {
+        'id': i,
         'title': fake.sentence(nb_words=6),
         'text': fake.paragraph(nb_sentences=100),
         'author': fake.name(),
         'date': fake.date_time_between(start_date='-2y', end_date='now'),
         'image_id': f'{images_ids[i]}.jpg',
-        'comments': generate_comments()
+        'comments': []
     }
 
 
-posts_list = sorted(
-    [generate_post(i) for i in range(5)], key=lambda p: p['date'], reverse=True
-)
+posts_list = {key: value for key, value in
+              zip(list(range(0, POST_LIST_LEN)),
+                  [generate_post(i) for i in range(POST_LIST_LEN)])}
 
 
 @app.route('/')
@@ -57,14 +48,18 @@ def index():
 
 @app.route('/posts')
 def posts():
-    return render_template('posts.html', title='Посты', posts=posts_list)
+    p = sorted([posts_list[i] for i in range(POST_LIST_LEN)],
+               key=lambda x: x['date'],
+               reverse=True)
+    return render_template('posts.html', title='Посты', posts=p)
 
 
-@app.route('/posts/<int:index>')
-def post(index):
-    p = posts_list[index]
+@app.route('/posts/<int:post_id>')
+def post(post_id):
     return render_template(
-        'post.html', title=p['title'], post=p, post_index=index
+        'post.html', title=posts_list[post_id]['title'],
+        post=posts_list[post_id],
+        post_id=post_id
         )
 
 
@@ -73,13 +68,30 @@ def about():
     return render_template('about.html', title='Об авторе')
 
 
-@app.route('/add_comment/<int:post_index>', methods=['POST'])
-def add_comment(post_index):
+@app.route('/posts/<int:post_id>/comments/add_comment', methods=['POST'])
+def add_comment(post_id):
     comment_text = request.form.get('comment_text')
-    author_text = request.form.get('author_text')
-    posts_list[post_index]['comments'].append({
+    author_text = request.form.get('author_comment')
+    posts_list[post_id]['comments'].append({
+        'id': len(posts_list[post_id]['comments']),
         'author': author_text,
         'text': comment_text,
-        'avatar_image': avatars[random.randint(0, len(avatars)-1)]
+        'avatar_image': avatars[random.randint(0, len(avatars)-1)],
+        'replies': []
     })
-    return redirect(url_for('post', index=post_index))
+    return redirect(url_for('post', post_id=post_id))
+
+
+@app.route('/posts/<int:post_id>/comments/<int:comment_id>/add_reply',
+           methods=['POST'])
+def add_reply(post_id, comment_id):
+    comment_text = request.form.get('comment_text_reply')
+    author_text = request.form.get('author_text_reply')
+    posts_list[post_id]['comments'][comment_id]['replies'].append({
+        'id': len(posts_list[post_id]['comments'][comment_id]['replies']),
+        'author': author_text,
+        'text': comment_text,
+        'avatar_image': avatars[random.randint(0, len(avatars)-1)],
+    })
+    return redirect(url_for('post', post_id=post_id))
+

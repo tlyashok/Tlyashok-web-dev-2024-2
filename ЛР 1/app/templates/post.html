@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
 {% block content %}
     <div class="container">
         <article class="mt-5">
@@ -14,14 +18,14 @@
 
         <hr>
 
-        <form action="{{ url_for('add_comment', post_index=post_index) }}" method="post" class="mt-4">
+        <form action="{{ url_for('add_comment', post_id=post_id) }}" method="post" class="mt-4">
             <div class="mb-3">
-                <div id="author">
-                    <label for="author_text" class="form-label">Ваше имя:</label>
-                    <textarea class="form-control" id="author_text" name="author_text" rows="1" required></textarea>
+                <div>
+                    <label for="author_comment" class="form-label">Ваше имя:</label>
+                    <textarea class="form-control" id="author_comment" name="author_comment" rows="1" required></textarea>
                 </div>
-                <div id="comment">
-                    <label for="comment" class="form-label">Комментарий:</label>
+                <div>
+                    <label for="comment_text" class="form-label">Комментарий:</label>
                     <textarea class="form-control" id="comment_text" name="comment_text" rows="3" required></textarea>
                 </div>
                 
@@ -39,9 +43,24 @@
                     <div class="flex-grow-1 ms-3">
                         <h5>{{ comment.author }}</h5>
                         <p class="mb-3">{{ comment.text }}</p>
+                        <button class="btn btn-secondary reply-btn" comment-id="{{ comment.id }}">Ответить</button>
+                        <form id="reply-form-{{ comment.id }}" action="{{ url_for('add_reply', comment_id=comment.id, post_id=post_id) }}" method="post" class="d-none mt-3">
+                            <div class="mb-3">
+                                <div>
+                                    <label for="author_text_reply" class="form-label">Ваше имя:</label>
+                                    <textarea class="form-control" id="author_text_reply" name="author_text_reply" rows="1" required></textarea>
+                                </div>
+                                <div>
+                                    <label for="comment_text_reply" class="form-label">Комментарий:</label>
+                                    <textarea class="form-control" id="comment_text_reply" name="comment_text_reply" rows="3" required></textarea>
+                                </div>
+                                
+                            </div>
+                            <button type="submit" class="btn btn-primary">Отправить</button>
+                        </form>
                         {% if comment.replies %}
                             {% for reply in comment.replies %}
-                                <div class="d-flex">
+                                <div class="d-flex mt-3">
                                     <div class="flex-shrink-0 mx-3">
                                         <img src="{{ url_for('static', filename='images/' + reply.avatar_image) }}" class="rounded-circle" alt="Avatar" width="64">
                                     </div>
@@ -57,4 +76,5 @@
             {% endfor %}
         </div>
     </div>
+    <script src="{{ url_for('static', filename='scripts/post.js') }}"></script>
 {% endblock %}
