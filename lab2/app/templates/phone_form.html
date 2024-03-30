@@ -1,0 +1,30 @@
+<!-- Файл phone_form.html -->
+{% extends 'base.html' %}
+
+{% block title %}
+Phone Number Form - My App
+{% endblock %}
+
+{% block content %}
+<div class="mt-4">
+    <h1>Форма валидации номера телефона</h1>
+    <form method="post" action="{{ url_for('phone_form') }}">
+        <div class="mb-3">
+            <label for="phone_number" class="form-label">Номер телефона</label>
+            <input type="text" class="form-control {% if errors %}is-invalid{% endif %}" id="phone_number" name="phone_number" placeholder="Введите номер телефона">
+            {% if errors %}
+            <div class="invalid-feedback">
+                {{ errors }}
+            </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Проверить</button>
+    </form>
+    
+    {% if formatted_phone %}
+    <div class="mt-4">
+        {{ formatted_phone }}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
