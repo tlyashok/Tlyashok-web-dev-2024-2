@@ -32,8 +32,9 @@
             </div>
             <button type="submit" class="btn btn-primary">Отправить</button>
         </form>
-
-        <h2 class="mt-4">Комментарии</h2>
+        {% if post.comments %}
+            <h2 class="mt-4">Комментарии</h2>
+        {% endif %}
         <div class="comments">
             {% for comment in post.comments %}
                 <div class="d-flex border p-3 mb-3">
