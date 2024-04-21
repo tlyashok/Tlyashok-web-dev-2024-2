@@ -3,6 +3,9 @@
 {% block title %}Главная страница{% endblock %}
 
 {% block content %}
-    <h1>Главная страница</h1>
-    <p>Добро пожаловать, {{ current_user.id }}!</p>
+    {% if current_user.is_authenticated %}
+        <p>Добро пожаловать, {{ current_user.id }}!</p>
+    {% else %}
+        <p>Добро пожаловать, Anonymous!</p>
+    {% endif %}
 {% endblock %}

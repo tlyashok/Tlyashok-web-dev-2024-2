@@ -1,11 +1,31 @@
-from flask import Flask, render_template, redirect, url_for, request, session
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user
+from flask import (
+    Flask,
+    flash,
+    get_flashed_messages,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    login_required,
+    login_user,
+    logout_user,
+)
 
 app = Flask(__name__)
 app.secret_key = '25c90e325b2f17da21834f3d65d96a06'
+application = app
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Авторизируйтесь для доступа на эту страницу.'
+login_manager.login_message_category = 'warning'
 
 
 class User(UserMixin):
@@ -13,7 +33,7 @@ class User(UserMixin):
         self.id = user_id
 
 
-users = {'user': {'password': 'qwerty'}}
+users = {'user': {'password': 'user'}}
 
 
 @login_manager.user_loader
@@ -36,11 +56,18 @@ def login():
         if username in users and users[username]['password'] == password:
             user = User(username)
             login_user(user, remember=remember)
-            return redirect(url_for('index'))
+            flash('Успешная авторизация!', category='success')
+            ref_url = request.form.get('next')
+            if ref_url is not None:
+                return redirect(ref_url)
+            else:
+                return render_template('login.html')
 
-        return render_template('login.html', error='Неверные данные')
+        flash('Неверный логин или пароль!', category='danger')
+        return render_template('login.html')
 
-    return render_template('login.html')
+    elif request.method == 'GET':
+        return render_template('login.html')
 
 
 @app.route('/logout')
@@ -53,13 +80,13 @@ def logout():
 @app.route('/secret')
 @login_required
 def secret():
-    return render_template('secret.html')
+    return render_template('secret.html', next=request.endpoint)
 
 
 @app.route('/visit-counter')
 def visit_counter():
     session['visits'] = session.get('visits', 0) + 1
-    return f'Вы посетили эту страницу {session["visits"]} раз'
+    return render_template('visit-counter.html', visits=session['visits'])
 
 
 if __name__ == '__main__':
