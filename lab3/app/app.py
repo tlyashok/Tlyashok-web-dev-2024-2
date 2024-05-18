@@ -58,10 +58,12 @@ def login():
             login_user(user, remember=remember)
             flash('Успешная авторизация!', category='success')
             ref_url = request.form.get('next')
-            if ref_url is not None:
+            if bool(ref_url):
                 return redirect(ref_url)
             else:
-                return render_template('login.html')
+                if ref_url == '':
+                    return redirect(url_for('index'))
+                return render_template('login.html', next=request.endpoint)
 
         flash('Неверный логин или пароль!', category='danger')
         return render_template('login.html')
