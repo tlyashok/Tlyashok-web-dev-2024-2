@@ -1,6 +1,9 @@
 import re
 
 import mysql.connector
+from autorization import (
+    can_user,
+)
 from flask import (
     Blueprint,
     flash,
@@ -83,6 +86,7 @@ def get_roles():
 
 
 @bp.route('/users-list')
+@can_user('read')
 def get_users_list():
     with db_connector.connect().cursor(dictionary=True) as cursor:
         query = """
@@ -101,6 +105,7 @@ def get_users_list():
 
 @bp.route('/create-user', methods=['GET', 'POST'])
 @login_required
+@can_user('create')
 def create_user():
     user = {}
     if request.method == 'POST':
@@ -123,7 +128,8 @@ def create_user():
         errors = validate_user_data(login, password, first_name, last_name)
 
         if errors:
-            return render_template('create-user.html', user=user, roles=get_roles(), errors=errors)
+            return render_template('create-user.html', user=user, roles=get_roles(),
+                                   errors=errors)
 
         try:
             # Сохранение пользователя в базу данных
@@ -155,12 +161,13 @@ def create_user():
 
 @bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
+@can_user('update')
 def edit_user(user_id):
     if request.method == 'POST':
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         middle_name = request.form.get('middle_name')
-        role_id = request.form['role_id']
+        role_id = request.form.get('role_id')
 
         if not (first_name and last_name):
             flash('Не все обязательные поля заполнены', category='danger')
@@ -168,14 +175,25 @@ def edit_user(user_id):
 
         try:
             with db_connector.connect().cursor() as cursor:
-                query = """
-                    UPDATE Users SET
-                    last_name = %s, first_name = %s, middle_name = %s,
-                    role_id = %s WHERE id = %s
-                """
-                cursor.execute(query, (last_name, first_name,
-                                       middle_name, role_id, user_id))
-                db_connector.connect().commit()
+                if current_user.can('assign_roles'):
+                    query = """
+                        UPDATE Users SET 
+                        last_name = %s, first_name = %s, middle_name = %s,
+                        role_id = %s WHERE id = %s
+                    """  # noqa: W291
+                    cursor.execute(query, (last_name, first_name,
+                                        middle_name, role_id, user_id))
+                    db_connector.connect().commit()
+                else:
+                    query = """
+                        UPDATE Users SET 
+                        last_name = %s, first_name = %s, middle_name = %s 
+                        WHERE id = %s
+                    """  # noqa: W291
+                    cursor.execute(query, (last_name, first_name,
+                                        middle_name, user_id))
+                    db_connector.connect().commit()
+
             flash('Запись пользователя успешно обновлена', category='success')
 
             return redirect(url_for('users.get_users_list'))
@@ -202,6 +220,7 @@ def edit_user(user_id):
 
 @bp.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
+@can_user('delete')
 def delete_user(user_id):
     try:
         with db_connector.connect().cursor() as cursor:

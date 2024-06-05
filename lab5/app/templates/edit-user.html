@@ -6,5 +6,5 @@
 
 {% block content %}
     <h1 class="mt-4">Редактирование пользователя</h1>
-    {{ user_form('edit', roles, errors, user) }}
+    {{ user_form(current_user, 'edit',  roles, errors, user) }}
 {% endblock %}

@@ -10,3 +10,4 @@ MYSQL_USER = 'std_2585_lab4'
 MYSQL_DATABASE = 'std_2585_lab4'
 MYSQL_PASSWORD = '12345678'
 MYSQL_HOST = 'std-mysql.ist.mospolytech.ru'
+ADMIN_ROLE_ID = 1

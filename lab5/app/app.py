@@ -20,9 +20,10 @@ app.config.update(
     MYSQL_HOST=config.MYSQL_HOST,
     MYSQL_DATABASE=config.MYSQL_DATABASE,
     SECRET_KEY=config.SECRET_KEY,
+    ADMIN_ROLE_ID=config.ADMIN_ROLE_ID,
 )
 
-application = app 
+application = app
 
 
 with app.app_context():
@@ -34,12 +35,6 @@ with app.app_context():
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
 init_login_manager(app)
-
-class User(UserMixin):
-    def __init__(self, user_id, username):
-        self.id = user_id
-        self.username = username
-
 
 @app.route('/')
 def index():

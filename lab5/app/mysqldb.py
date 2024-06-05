@@ -45,9 +45,9 @@ class DBConnector:
             cursor = connection.cursor()
             cursor.execute("""
                 INSERT INTO Roles (name, description)
-                VALUES ('Пользователь', ''), ('Администратор', '')
+                VALUES ('Администратор', ''), ('Пользователь', '')
             """)
-            role_id = cursor.lastrowid
+            role_id = 1
             cursor.execute("""
                 INSERT INTO Users (login, password, last_name, first_name,
                                 middle_name, role_id)

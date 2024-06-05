@@ -1,5 +1,8 @@
+from functools import wraps
+
 from flask import (
     Blueprint,
+    current_app,
     flash,
     redirect,
     render_template,
@@ -9,10 +12,12 @@ from flask import (
 from flask_login import (
     LoginManager,
     UserMixin,
+    current_user,
     login_required,
     login_user,
     logout_user,
 )
+from users_policy import UsersPolicy
 
 from app import (
     db_connector,
@@ -22,9 +27,17 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 class User(UserMixin):
-    def __init__(self, user_id, username):
+    def __init__(self, user_id, user_login, role_id):
         self.id = user_id
-        self.username = username
+        self.user_login = user_login
+        self.role_id = role_id
+
+    def is_admin(self):
+        return self.role_id == current_app.config['ADMIN_ROLE_ID']
+
+    def can(self, action, user=None):
+        self.policy = UsersPolicy(user)
+        return getattr(self.policy, action, lambda: 1/0)()
 
 
 def init_login_manager(app):
@@ -44,7 +57,27 @@ def load_user(user_id):
 
         cursor.execute(query, (user_id,))
         user = cursor.fetchone()
-    return User(user_id, user['login'])
+    return User(user_id, user['login'], user['role_id'])
+
+
+def can_user(action):
+    def decorator(function):
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            user = None
+            if 'user_id' in kwargs:
+                with db_connector.connect().cursor(dictionary=True) as cursor:
+                    cursor.execute(
+                        'SELECT * FROM Users WHERE id = %s;',
+                        (kwargs.get('user_id'),),
+                    )
+                    user = cursor.fetchone()
+            if current_user.is_authenticated and not current_user.can(action, user):
+                flash('Недостаточно прав для выполнения данного действия', 'warning')
+                return redirect(url_for('users.get_users_list'))
+            return function(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -66,7 +99,7 @@ def login():
             user = cursor.fetchone()
 
         if user is not None:
-            user = User(user['id'], username)
+            user = User(user['id'], username, user['role_id'])
             login_user(user, remember=remember)
             flash('Успешная авторизация!', category='success')
             ref_url = request.form.get('next')
