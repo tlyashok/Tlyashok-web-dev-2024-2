@@ -36,6 +36,7 @@ class DBConnector:
     def drop_tables(self):
         with self.connect() as connection:
             cursor = connection.cursor()
+            cursor.execute('DROP TABLE IF EXISTS Action_logs;')
             cursor.execute('DROP TABLE IF EXISTS Users;')
             cursor.execute('DROP TABLE IF EXISTS Roles;')
             connection.commit()
@@ -80,5 +81,16 @@ class DBConnector:
                     role_id INT,
                     FOREIGN KEY (role_id) REFERENCES Roles(id)
                 ) ENGINE=INNODB;
+            """)
+            connection.commit()
+
+            cursor.execute("""
+                CREATE TABLE Action_logs (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                user_id INT,
+                path VARCHAR(100) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES Users(id)
+            ) ENGINE INNODB;
             """)
             connection.commit()

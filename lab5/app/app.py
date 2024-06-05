@@ -7,6 +7,7 @@ from flask import (
 )
 from flask_login import (
     UserMixin,
+    current_user,
     login_required,
 )
 from mysqldb import (
@@ -30,11 +31,29 @@ with app.app_context():
     db_connector = DBConnector(app)
     from autorization import bp as auth_bp
     from autorization import init_login_manager
+    from user_actions import bp as user_actions_bp
     from users import bp as users_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(users_bp)
+app.register_blueprint(user_actions_bp)
 init_login_manager(app)
+
+@app.before_request
+def record_action():
+    if request.endpoint == 'static':
+        return
+    user_id = current_user.id if current_user.is_authenticated else None
+    path = request.path
+    connection = db_connector.connect()
+    try:
+        with connection.cursor(dictionary=True, buffered=True) as cursor:
+            query = 'INSERT INTO Action_logs (user_id, path) VALUES (%s, %s)'
+            cursor.execute(query, (user_id, path))
+            connection.commit()
+    except db_connector.errors.DatabaseError as error:
+        print(error)  # noqa: T201
+        connection.rollback()
 
 @app.route('/')
 def index():
